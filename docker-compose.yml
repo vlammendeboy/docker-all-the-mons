@@ -1,0 +1,38 @@
+services:
+  minecraft:
+    image: itzg/minecraft-server:java21
+    container_name: all_the_mons_server
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    ports:
+      - "25565:25565"
+    environment:
+      EULA: "TRUE"
+      TYPE: "AUTO_CURSEFORGE"
+      CF_SLUG: "all-the-mons"
+      MEMORY: "12G"
+      TZ: "Europe/Brussels"
+      DIFFICULTY: "normal"
+      CF_API_KEY: ${CF_API_KEY}
+      USE_AIKAR_FLAGS: "true"
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: ${RCON_PW}
+    volumes:
+      - ./data:/data
+
+  backups:
+    image: itzg/mc-backup
+    container_name: all_the_mons_backup
+    depends_on:
+      - minecraft
+    environment:
+      BACKUP_INTERVAL: "12h"               # How often to back up (e.g., 2h, 12h, 1d)
+      PRUNE_BACKUP_DAYS: "2"               # Automatically deletes backups older than 7 days
+      RCON_HOST: "minecraft"               # Tells the backup bot where the server is
+      RCON_PASSWORD: ${RCON_PW}            # MUST match the password above!
+      INITIAL_DELAY: "5m"                  # Wait 5 minutes after startup before doing the first backup
+    volumes:
+      - ./data:/data:ro                    # Mounts the server data as read-only
+      - ./backups:/backups                 # Creates a new local folder to store the zip files
+    restart: unless-stopped
